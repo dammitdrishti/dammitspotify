@@ -1,0 +1,5 @@
+{
+  "name": "Spotify-personalised",
+  "description": "A client-side Spotify analyzer that reveals your heavy rotation, underground favorites, and vibe-checked tracks using the Spotify Web API.",
+  "requestFramePermissions": []
+}
