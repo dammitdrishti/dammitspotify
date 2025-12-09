@@ -13,7 +13,7 @@ import { AppView, SpotifyTrack, VibeMode } from './types';
 const App = () => {
   const [token, setToken] = useState<string | null>(null);
   const [view, setView] = useState<AppView>(AppView.LOGIN);
-  
+   
   const [candidates, setCandidates] = useState<SpotifyTrack[]>([]); 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set()); 
   const [finalTracks, setFinalTracks] = useState<SpotifyTrack[]>([]); 
@@ -22,7 +22,7 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultTitle, setResultTitle] = useState('');
-  
+   
   const effectRan = useRef(false);
 
   // --- Auth Flow ---
@@ -67,7 +67,7 @@ const App = () => {
     setLoading(true); setError(null);
     try {
       const tracks = await fetchTopTracks(token, 50, 'long_term');
-      
+       
       const sorted = tracks.sort((a: any, b: any) => 
         a.album.release_date.localeCompare(b.album.release_date)
       );
@@ -98,7 +98,7 @@ const App = () => {
     setLoading(true); setError(null);
     try {
       const allTracks = await fetchTopTracks(token, 50, 'long_term');
-      
+       
       if (allTracks.length === 0) throw new Error("No listening history found.");
 
       const trackIds = allTracks.map(t => t.id);
@@ -118,7 +118,7 @@ const App = () => {
             const sorted = [...availableTracks].sort(sortFn);
             winner = sorted[0];
         }
-        
+         
         if (winner) {
           picks[vibe] = [winner];
           availableTracks = availableTracks.filter(t => t.id !== winner.id);
@@ -172,7 +172,7 @@ const App = () => {
   };
 
   if (view === AppView.LOGIN) return <LoginView error={error} loading={loading} onLogin={handleLogin} />;
-  
+   
   return (
     <div className="min-h-screen bg-zinc-950 p-6 md:p-12 max-w-7xl mx-auto text-white font-sans">
       <Header logout={logout} />
@@ -241,22 +241,22 @@ const Header = ({ logout }: any) => (
 const LoadingOverlay = () => <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 flex-col gap-4"><Loader2 className="animate-spin text-green-500 w-12 h-12"/><p className="text-green-500 animate-pulse">Analyzing Library...</p></div>;
 const ErrorBanner = ({message}: any) => <div className="bg-red-900/50 text-red-200 p-4 rounded mb-6 text-center">{message}</div>;
 
-// --- DASHBOARD (Using Spot1, Spot2, Spot3) ---
+// --- DASHBOARD (Using Spot1, Spot2, Spot3 as JPG) ---
 const Dashboard = ({ onYourEras, onGatekeeper, onSonicAura }: any) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4">
     <ImageCard 
       onClick={onYourEras} 
-      imageSrc="/spot1.png"
+      imageSrc="/spot1.jpg"
       altText="Your Eras"
     />
     <ImageCard 
       onClick={onGatekeeper} 
-      imageSrc="/spot2.png" 
+      imageSrc="/spot2.jpg" 
       altText="Gatekeeper Score"
     />
     <ImageCard 
       onClick={onSonicAura} 
-      imageSrc="/spot3.png"
+      imageSrc="/spot3.jpg"
       altText="Sonic Aura"
     />
   </div>
@@ -294,7 +294,7 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
                 <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full"><ArrowLeft /></button>
                 <h2 className="text-3xl font-bold">Choose Your Vibe</h2>
             </div>
-            
+             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {vibes.map((v) => {
                     const topSong = buckets[v.id]?.[0];
@@ -365,7 +365,7 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
           </div>
           <button onClick={onConfirm} disabled={selectedIds.size === 0} className="px-6 py-2 bg-[#1DB954] text-black font-bold rounded-full disabled:opacity-30 transition-all">Generate</button>
         </div>
-    
+     
         {isUnderground && (
             <div className="mb-8 p-4 bg-zinc-900 rounded-xl border border-zinc-800">
                 <div className="flex items-center gap-2 mb-3 text-sm text-zinc-400"><BarChart3 className="w-4 h-4" /> <span>Uniqueness Score (New Green Palette)</span></div>
@@ -393,7 +393,7 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
 
     const handleDownload = async () => {
         if (!resultsRef.current) return;
-        
+         
         // Wait a tiny bit for images to load if needed
         await new Promise(resolve => setTimeout(resolve, 500));
 
