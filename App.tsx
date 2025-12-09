@@ -95,7 +95,6 @@ const App = () => {
 
   const startSelection = (tracks: SpotifyTrack[], title: string) => {
     // STRICT FORCE: Only take the first 25 items passed to this function
-    // This guarantees the selection screen never has more than 25 items
     const limit = 25; 
     setCandidates(tracks.slice(0, limit));
     setSelectedIds(new Set()); 
@@ -112,7 +111,6 @@ const App = () => {
       const tracks = await fetchTopTracks(token, 50, 'long_term');
       
       // 2. CRITICAL FIX: Slice to Top 25 MOST PLAYED *BEFORE* sorting by date
-      // This ensures we only deal with 25 songs total
       const top25 = tracks.slice(0, 25);
 
       // 3. Sort those 25 by Release Date
@@ -507,7 +505,7 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
 
 // UPDATED RESULTS VIEW: 
 // 1. Single Track = Morphed Glass Box (with BG Image)
-// 2. Multi Track = Clean Dark BG (NO Glass, NO BG Image, 2x5 Grid)
+// 2. Multi Track = CLEAN, FLAT, NO GLASS. 
 const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
     const isSingleTrack = tracks.length === 1;
@@ -563,19 +561,27 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
                  </div>
              </div>
          ) : (
-             // === MULTI TRACK (Eras/Gatekeeper) - CLEAN DARK BG (No Glass), 2x5 GRID ===
-             // IMPORTANT: This container has NO glass class, just simple bg-[#09090b]
-             <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-12 relative overflow-hidden flex flex-col items-center bg-[#09090b] border border-zinc-900 shadow-2xl">
-                 <div className="text-center z-10 mb-10">
-                     <div className="text-4xl font-black mb-2 text-white tracking-tighter">dammitspotifywrapped</div>
-                     <div className="text-2xl font-black uppercase text-[#1DB954] mb-2 tracking-wide">{title.toUpperCase()}</div>
-                     <div className="text-xs uppercase tracking-[0.3em] font-semibold text-zinc-500">spotify wrapped ka better half</div>
+             // === MULTI TRACK (Eras/Gatekeeper) - REFINED CLEAN CARD LAYOUT ===
+             // No glass. Solid, clean dark background. Watermark style branding.
+             <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-8 md:p-12 relative overflow-hidden flex flex-col items-center bg-[#0d0d0d] border border-zinc-900 shadow-2xl">
+                 
+                 {/* Top-Left Watermark Branding */}
+                 <div className="absolute top-8 left-8 flex items-center gap-2 opacity-50">
+                     <span className="text-xl">🎵</span>
+                     <span className="font-bold text-sm tracking-tighter text-white">dammitspotifywrapped</span>
+                 </div>
+
+                 <div className="text-center z-10 mb-10 mt-6">
+                     {/* Big Green Title */}
+                     <div className="text-4xl md:text-5xl font-black mb-3 text-[#1DB954] uppercase tracking-tighter drop-shadow-sm">{title}</div>
+                     {/* Subtitle */}
+                     <div className="text-xs uppercase tracking-[0.4em] font-bold text-zinc-400">spotify wrapped ka better half</div>
                  </div>
 
                  {/* 2x5 GRID - Clean Look */}
-                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full z-10">
+                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full z-10 px-4">
                      {tracks.slice(0, 10).map((t: any, i: number) => (
-                         <div key={i} className="song-card bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex flex-col items-center text-center hover:bg-zinc-800 transition-colors group relative shadow-lg">
+                         <div key={i} className="song-card bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-xl flex flex-col items-center text-center hover:bg-zinc-800 transition-colors group relative shadow-lg">
                              <div className="relative w-full aspect-square mb-4">
                                  <img src={t.album.images[0]?.url} className="w-full h-full rounded-lg shadow-md object-cover" alt="" crossOrigin="anonymous"/>
                                  <div className="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg cursor-pointer transition-opacity" onClick={(e) => openSpotify(e, t.external_urls.spotify)}>
@@ -584,13 +590,16 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
                              </div>
                              <div className="w-full">
                                  <p className="font-bold text-white text-sm truncate w-full mb-1">{i+1}. {t.name}</p>
-                                 <p className="text-zinc-400 text-xs truncate w-full">{t.artists[0].name}</p>
+                                 <p className="text-zinc-500 text-xs truncate w-full font-medium">{t.artists[0].name}</p>
                              </div>
                          </div>
                      ))}
                  </div>
 
-                 <div className="text-[10px] opacity-40 uppercase tracking-widest text-zinc-600 mt-12 z-10">GENERATED BY DAMMITDC</div>
+                 {/* Visible Footer */}
+                 <div className="text-[10px] uppercase tracking-widest text-zinc-500 mt-12 z-10 font-bold opacity-70">
+                     GENERATED BY DAMMITDC
+                 </div>
              </div>
          )}
 
