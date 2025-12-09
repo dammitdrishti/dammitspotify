@@ -1,14 +1,15 @@
 import { SpotifyTrack, AudioFeatures } from "../types";
 
-// 1. YOUR CLIENT ID
+// 1. YOUR CLIENT ID (Keep this)
 export const CLIENT_ID = "1dbe1040e81d4ca8b1f2e4646d16e9e1"; 
 
-// 2. YOUR EXACT NETLIFY URL (Must match Spotify Dashboard exactly)
+// 2. YOUR REDIRECT URI (Keep this)
+// This must match your Spotify Dashboard EXACTLY (including the slash at the end)
 const REDIRECT_URI = "https://dammitspotifywrapped.netlify.app/";
 
 const SCOPES = ["user-top-read", "user-read-private", "user-read-email"];
 
-// 🔒 THE REAL, OFFICIAL SPOTIFY ENDPOINTS (Fixed)
+// 3. 🔴 THE FIX: THESE ARE THE OFFICIAL SPOTIFY ENDPOINTS 🔴
 const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 const API_BASE = "https://api.spotify.com/v1";
@@ -70,6 +71,7 @@ export const getAccessToken = async (code: string): Promise<string> => {
   });
 
   if (!result.ok) {
+      // Log the error to see why it failed
       const errorText = await result.text();
       console.error("Token Exchange Failed:", errorText);
       throw new Error("Login failed.");
