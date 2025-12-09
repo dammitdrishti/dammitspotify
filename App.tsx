@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { 
-  Music, LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Sparkles
+  Music, LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2
 } from 'lucide-react';
 
 import { 
@@ -241,40 +241,50 @@ const Header = ({ logout }: any) => (
 const LoadingOverlay = () => <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 flex-col gap-4"><Loader2 className="animate-spin text-green-500 w-12 h-12"/><p className="text-green-500 animate-pulse">Analyzing Library...</p></div>;
 const ErrorBanner = ({message}: any) => <div className="bg-red-900/50 text-red-200 p-4 rounded mb-6 text-center">{message}</div>;
 
-// --- DASHBOARD (Using Spot1, Spot2, Spot3 as JPG) ---
+// --- DASHBOARD (UPDATED: Added Titles & Descriptions) ---
 const Dashboard = ({ onYourEras, onGatekeeper, onSonicAura }: any) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4">
     <ImageCard 
       onClick={onYourEras} 
       imageSrc="/spot1.jpg"
-      altText="Your Eras"
+      title="Your Eras"
+      description="Travel through your musical history."
     />
     <ImageCard 
       onClick={onGatekeeper} 
       imageSrc="/spot2.jpg" 
-      altText="Gatekeeper Score"
+      title="Gatekeeper Score"
+      description="How unique is your music taste?"
     />
     <ImageCard 
       onClick={onSonicAura} 
       imageSrc="/spot3.jpg"
-      altText="Sonic Aura"
+      title="Sonic Aura"
+      description="Discover your true musical vibe."
     />
   </div>
 );
 
-// --- VERTICAL CARD COMPONENT ---
-const ImageCard = ({ onClick, imageSrc, altText }: any) => (
+// --- VERTICAL CARD COMPONENT (UPDATED: Displays Text Overlay) ---
+const ImageCard = ({ onClick, imageSrc, title, description }: any) => (
   <div 
     onClick={onClick} 
     className="relative h-[500px] rounded-[3rem] overflow-hidden cursor-pointer group shadow-2xl shadow-black/70 transition-transform duration-500 hover:scale-[1.02]"
   >
     <img 
       src={imageSrc} 
-      alt={altText} 
+      alt={title} 
       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
     />
-    {/* Subtle dark overlay for better visibility if needed */}
-    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
+    
+    {/* Gradient Overlay for Text Readability */}
+    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+    
+    {/* Text Content */}
+    <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+      <h3 className="text-3xl font-bold text-white mb-2 tracking-wide uppercase">{title}</h3>
+      <p className="text-zinc-300 text-sm font-medium">{description}</p>
+    </div>
   </div>
 );
 
