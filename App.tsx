@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { 
-  Music, LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Sparkles, Eye
+  Music, LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Eye
 } from 'lucide-react';
 
 import { 
   redirectToAuthCodeFlow, getAccessToken, fetchTopTracks, fetchAudioFeatures 
 } from './services/spotifyService';
 
-// Ensure AppView in your types.ts includes VIBE_INITIAL_CHOOSE
 import { AppView, SpotifyTrack, VibeMode } from './types';
 
 const App = () => {
@@ -140,18 +139,16 @@ const App = () => {
       pickWinner(VibeMode.MAIN_CHAR, (a, b) => getFeat(b).valence - getFeat(a).valence);
 
       setVibeBuckets(picks);
-      // UPDATED FLOW: Go to initial choice screen first
       setView(AppView.VIBE_INITIAL_CHOOSE);
 
     } catch (err: any) { handleError(err); } finally { setLoading(false); }
   };
 
-  // UPDATED: Handles clicking a specific vibe (skips selection, goes to results)
   const handleSelectSingleVibeAndFinish = (vibeId: string) => {
       const track = vibeBuckets[vibeId]?.[0];
       if (track) {
           setFinalTracks([track]);
-          setResultTitle(`Sonic Aura: ${vibeId}`);
+          setResultTitle(`${vibeId}`); // Kept simple for the new design
           setView(AppView.RESULTS);
       }
   };
@@ -194,7 +191,6 @@ const App = () => {
         />
       )}
 
-      {/* NEW VIEW: Initial Vibe Choice (Text Only) */}
       {view === AppView.VIBE_INITIAL_CHOOSE && (
         <VibeInitialChooseView
             onSelectVibe={handleSelectSingleVibeAndFinish}
@@ -203,11 +199,9 @@ const App = () => {
         />
       )}
 
-      {/* OLD VIEW: Used for "Reveal All" */}
       {view === AppView.VIBE_MENU && (
         <VibeMenuView 
             buckets={vibeBuckets} 
-            // UPDATED: Clicking here also goes straight to results now
             onSelect={handleSelectSingleVibeAndFinish} 
             onBack={() => setView(AppView.VIBE_INITIAL_CHOOSE)} 
         />
@@ -237,11 +231,11 @@ const App = () => {
 
 // --- SUB COMPONENTS ---
 
-// ... (LoginView, Header, LoadingOverlay, ErrorBanner, Dashboard, ImageCard remain exactly the same as previous version) ...
 const LoginView = ({ error, loading, onLogin }: any) => (
   <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 relative">
     <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/20"><Music className="w-8 h-8 text-black" /></div>
-    <h1 className="text-4xl font-bold mb-8">Spotify Insights</h1>
+    {/* UPDATED NAME */}
+    <h1 className="text-5xl font-black mb-8 tracking-tighter">dammitspotifywrapped</h1>
     <button onClick={onLogin} disabled={loading} className="flex items-center gap-2 bg-green-500 text-black font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform">
        {loading ? <Loader2 className="animate-spin" /> : <LogIn className="w-5 h-5" />}
        {loading ? "Connecting..." : "Log in with Spotify"}
@@ -252,7 +246,8 @@ const LoginView = ({ error, loading, onLogin }: any) => (
 
 const Header = ({ logout }: any) => (
   <header className="flex justify-between items-center mb-8">
-    <div className="flex items-center gap-2"><Music className="text-green-500" /> <b>Spotify Insights</b></div>
+    {/* UPDATED NAME */}
+    <div className="flex items-center gap-2"><Music className="text-green-500" /> <b className="tracking-tight">dammitspotifywrapped</b></div>
     <button onClick={logout} className="text-zinc-400 hover:text-white">Log out</button>
   </header>
 );
@@ -279,8 +274,6 @@ const ImageCard = ({ onClick, imageSrc, title, description }: any) => (
   </div>
 );
 
-
-// --- NEW COMPONENT: Initial Vibe Choice (Text Only) ---
 const VibeInitialChooseView = ({ onSelectVibe, onRevealAll, onBack }: any) => {
     const vibes = [
         { id: VibeMode.BEAST, icon: <Flame className="w-5 h-5" />, color: 'red', desc: 'Highest Energy (Motivation)' },
@@ -312,7 +305,6 @@ const VibeInitialChooseView = ({ onSelectVibe, onRevealAll, onBack }: any) => {
                     </div>
                 ))}
                 
-                {/* THE "REVEAL ALL" CARD */}
                 <div onClick={onRevealAll} className="relative overflow-hidden bg-gradient-to-br from-green-900/30 to-zinc-900/50 border border-green-500/30 hover:border-green-500 hover:from-green-900/50 rounded-2xl p-6 transition-all cursor-pointer group h-48 flex flex-col justify-center items-center text-center col-span-full md:col-span-1 lg:col-span-3">
                         <div className="p-4 rounded-full bg-green-500/20 text-green-400 mb-4 group-hover:scale-110 transition-transform"><Eye className="w-8 h-8"/></div>
                         <h3 className="text-2xl font-bold mb-2 text-white">Reveal All Vibes & Songs</h3>
@@ -323,11 +315,8 @@ const VibeInitialChooseView = ({ onSelectVibe, onRevealAll, onBack }: any) => {
     );
 };
 
-
-// --- OLD COMPONENT (Repurposed for "Reveal All") ---
 const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
     const vibes = [
-        // ... (same vibe definitions as above)
         { id: VibeMode.BEAST, icon: <Flame className="w-5 h-5" />, color: 'red', desc: 'Highest Energy (Motivation)' },
         { id: VibeMode.MAIN_CHAR, icon: <Smile className="w-5 h-5" />, color: 'pink', desc: 'Highest Valence (Happiness)' },
         { id: VibeMode.VILLAIN, icon: <Zap className="w-5 h-5" />, color: 'orange', desc: 'High Energy + Low Valence (Angry)' },
@@ -339,7 +328,6 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
     return (
         <div className="animate-in fade-in">
             <div className="flex items-center gap-4 mb-8">
-                {/* Back button goes back to initial choice */}
                 <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full"><ArrowLeft /></button>
                 <h2 className="text-3xl font-bold">Your Full Sonic Profile</h2>
             </div>
@@ -348,7 +336,6 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
                 {vibes.map((v) => {
                     const topSong = buckets[v.id]?.[0];
                     return (
-                        // onSelect now goes straight to results view for that vibe
                         <div key={v.id} onClick={() => topSong && onSelect(v.id)} className={`relative overflow-hidden bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition-all group h-64 flex flex-col justify-between ${topSong ? 'cursor-pointer hover:border-white/20' : 'opacity-50 cursor-not-allowed'}`}>
                             {topSong && <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity"><img src={topSong.album.images[0]?.url} className="w-full h-full object-cover blur-xl" alt="" /></div>}
                             <div className="relative z-10 flex justify-between items-start"><div className={`p-3 rounded-xl bg-zinc-950/50 backdrop-blur text-${v.color}-400`}>{v.icon}</div></div>
@@ -370,7 +357,6 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
     );
 };
 
-// ... (SelectionView remains exactly the same) ...
 const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, onBack }: any) => {
     const isUnderground = title === 'Gatekeeper Score';
     const isTimeline = title === 'Your Eras';
@@ -439,17 +425,16 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
     );
 };
 
-
-// --- RESULTS VIEW (UPDATED: Text Changes & Aesthetic Single-Song Layout) ---
 const ResultsView = ({ title, tracks, onBack }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
     const isSingleTrack = tracks.length === 1;
     const singleTrack = tracks[0];
 
-    // Determine the main title based on the context title
     let mainTitleDisplay = title;
     if (title.includes("Eras")) mainTitleDisplay = "My Eras";
     else if (title.includes("Gatekeeper")) mainTitleDisplay = "Gatekeeper Score";
+    // If it's single track (Sonic Aura), title is usually passed as "Sonic Aura: VibeName" or just "VibeName"
+    // We will clean it up below in the display logic if needed.
 
     const handleDownload = async () => {
         if (!resultsRef.current) return;
@@ -458,7 +443,7 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
         const data = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = data;
-        link.download = `spotify-insights-${mainTitleDisplay.replace(/\s+/g, '-').toLowerCase()}.png`;
+        link.download = `dammitspotifywrapped-${mainTitleDisplay.replace(/\s+/g, '-').toLowerCase()}.png`;
         link.click();
     };
 
@@ -474,33 +459,43 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
             </button>
         </div>
 
-        {/* THE POSTER CONTAINER */}
-        <div ref={resultsRef} className={`p-8 bg-zinc-950 border border-zinc-800 rounded-3xl relative overflow-hidden ${isSingleTrack ? 'flex flex-col items-center justify-center min-h-[600px]' : ''}`}>
+        {/* --- RESULTS POSTER CONTAINER --- */}
+        <div ref={resultsRef} className={`relative overflow-hidden bg-zinc-950 border border-zinc-800 rounded-3xl ${isSingleTrack ? 'w-full aspect-[4/5] flex items-center justify-center' : 'p-8'}`}>
             
-            {/* Aesthetic blurred background for single track mode */}
+            {/* BACKGROUND FOR SINGLE TRACK: Full Blur Effect */}
             {isSingleTrack && (
-                 <div className="absolute inset-0 z-0 opacity-40 blur-[100px] scale-150 saturate-150 pointer-events-none">
-                     <img src={singleTrack.album.images[0]?.url} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
-                 </div>
+                 <>
+                    <img src={singleTrack.album.images[0]?.url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 blur-3xl scale-125 saturate-150 pointer-events-none" crossOrigin="anonymous" />
+                    <div className="absolute inset-0 bg-black/30 pointer-events-none"></div>
+                 </>
             )}
 
-            <div className="text-center mb-8 z-10 relative">
-                {/* UPDATED TEXT: Main Title based on feature */}
-                <h1 className="text-5xl font-black text-green-500 mb-2 tracking-tight">{mainTitleDisplay.toUpperCase()}</h1>
-                {/* UPDATED TEXT: New Subtitle */}
-                <p className="text-zinc-300 uppercase tracking-[0.2em] text-xs font-bold">spotify wrapped ka better half</p>
+            {/* HEADER TEXT (Standard for Grid, Overlay for Single) */}
+            <div className={`text-center z-20 relative ${isSingleTrack ? 'absolute top-12 left-0 right-0' : 'mb-8'}`}>
+                {/* UPDATED NAME */}
+                <h1 className={`${isSingleTrack ? 'text-4xl text-white shadow-black drop-shadow-lg' : 'text-5xl text-green-500'} font-black mb-2 tracking-tighter`}>dammitspotifywrapped</h1>
+                
+                {/* Subtitle / Feature Name */}
+                <p className={`${isSingleTrack ? 'text-zinc-100/80' : 'text-zinc-300'} uppercase tracking-[0.3em] text-xs font-bold`}>
+                    {isSingleTrack ? `SONIC AURA: ${title}` : "spotify wrapped ka better half"}
+                </p>
             </div>
 
             {isSingleTrack ? (
-                 // --- AESTHETIC SINGLE TRACK LAYOUT ---
-                 <div className="z-10 relative bg-zinc-900/60 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center max-w-md">
-                     <img src={singleTrack.album.images[0]?.url} alt={singleTrack.name} className="w-72 h-72 rounded-2xl shadow-lg mb-6" crossOrigin="anonymous" />
-                     <h2 className="text-3xl font-bold text-center mb-2 text-white">{singleTrack.name}</h2>
-                     <p className="text-xl text-green-400 font-medium">{singleTrack.artists[0].name}</p>
+                 // --- COOL GLASSMORPHISM SINGLE TRACK CARD ---
+                 <div className="z-20 relative bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-center max-w-sm w-full mx-4">
+                     {/* Album Art with Glow */}
+                     <div className="relative group">
+                        <div className="absolute inset-0 bg-green-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
+                        <img src={singleTrack.album.images[0]?.url} alt={singleTrack.name} className="relative w-64 h-64 rounded-2xl shadow-black/50 shadow-2xl mb-8 transform transition-transform group-hover:scale-105" crossOrigin="anonymous" />
+                     </div>
+                     
+                     <h2 className="text-3xl font-black text-center mb-2 text-white leading-tight drop-shadow-md">{singleTrack.name}</h2>
+                     <p className="text-lg text-green-300 font-bold uppercase tracking-wider drop-shadow-sm">{singleTrack.artists[0].name}</p>
                  </div>
             ) : (
-                // --- STANDARD GRID LAYOUT (Eras / Gatekeeper) ---
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 z-10 relative">
+                // --- STANDARD GRID LAYOUT ---
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 z-10 relative mt-4">
                     {tracks.map((track: any, idx: number) => (
                         <div key={track.id} className="group bg-zinc-900/80 backdrop-blur-sm rounded-xl p-4 relative border border-zinc-800/50">
                         <div className="aspect-square mb-4 overflow-hidden rounded-lg relative shadow-lg">
@@ -514,7 +509,9 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
             )}
             
             {/* UPDATED FOOTER TEXT */}
-            <div className="mt-12 text-center text-zinc-500 text-[10px] font-mono z-10 relative uppercase tracking-widest">GENERATED BY DAMMITDC</div>
+            <div className={`text-center text-[10px] font-mono z-20 relative uppercase tracking-widest opacity-60 ${isSingleTrack ? 'absolute bottom-8 left-0 right-0 text-white' : 'mt-12 text-zinc-500'}`}>
+                GENERATED BY DAMMITDC
+            </div>
         </div>
       </div>
     );
