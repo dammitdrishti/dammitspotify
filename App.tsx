@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { 
-  LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Eye, PlayCircle, ExternalLink
+  LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Eye, PlayCircle
 } from 'lucide-react';
 
 // Assuming these services exist in your project structure
@@ -17,6 +17,13 @@ const GLOBAL_STYLES = `
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+
+  /* Vintage Background (Only for Sonic Aura Single View) */
+  .vintage-bg {
+    background-image: url('https://i.ibb.co/f2FygQj/image-1.png');
+    background-size: cover;
+    background-position: center;
+  }
 
   /* Sonic Aura Specific Glass (Morphed Box) */
   .sonic-glass {
@@ -87,7 +94,8 @@ const App = () => {
   };
 
   const startSelection = (tracks: SpotifyTrack[], title: string) => {
-    // FIXED: Strict limit of 25 for everything
+    // STRICT FORCE: Only take the first 25 items passed to this function
+    // This guarantees the selection screen never has more than 25 items
     const limit = 25; 
     setCandidates(tracks.slice(0, limit));
     setSelectedIds(new Set()); 
@@ -100,13 +108,22 @@ const App = () => {
     if (!token) return;
     setLoading(true); setError(null);
     try {
+      // 1. Fetch top 50
       const tracks = await fetchTopTracks(token, 50, 'long_term');
-      const sorted = tracks.sort((a: any, b: any) => a.album.release_date.localeCompare(b.album.release_date));
-      const phasedTracks = sorted.map((t, index) => ({
+      
+      // 2. CRITICAL FIX: Slice to Top 25 MOST PLAYED *BEFORE* sorting by date
+      // This ensures we only deal with 25 songs total
+      const top25 = tracks.slice(0, 25);
+
+      // 3. Sort those 25 by Release Date
+      const sorted = top25.sort((a: any, b: any) => a.album.release_date.localeCompare(b.album.release_date));
+      
+      // 4. Assign Phases
+      const phasedTracks = sorted.map((t: any, index: number) => ({
           ...t,
           phase: index < sorted.length / 3 ? 1 : index < (2 * sorted.length) / 3 ? 2 : 3
       }));
-      // Passing isTimeline=true logic implicitly by title check later, but limiting to 25
+
       startSelection(phasedTracks, 'Your Eras');
     } catch (err: any) { handleError(err); } finally { setLoading(false); }
   };
@@ -116,8 +133,11 @@ const App = () => {
     setLoading(true); setError(null);
     try {
       const allTracks = await fetchTopTracks(token, 50, 'long_term');
+      // Sort by popularity (Ascending)
       const sorted = allTracks.sort((a, b) => a.popularity - b.popularity);
-      startSelection(sorted.slice(0, 25), 'Gatekeeper Score');
+      // Slice the 25 most obscure
+      const candidates = sorted.slice(0, 25);
+      startSelection(candidates, 'Gatekeeper Score');
     } catch (err: any) { handleError(err); } finally { setLoading(false); }
   };
 
@@ -486,8 +506,8 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
 };
 
 // UPDATED RESULTS VIEW: 
-// 1. Single Track = Morphed Glass Box (No BG Image)
-// 2. Multi Track = Clean Dark BG (No Glass, No BG Image)
+// 1. Single Track = Morphed Glass Box (with BG Image)
+// 2. Multi Track = Clean Dark BG (NO Glass, NO BG Image, 2x5 Grid)
 const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
     const isSingleTrack = tracks.length === 1;
@@ -496,8 +516,11 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const handleDownload = async () => {
         if (!resultsRef.current) return;
         await new Promise(resolve => setTimeout(resolve, 500));
-        // Use darker bg for canvas export if needed, or null to capture CSS bg
-        const canvas = await html2canvas(resultsRef.current, { backgroundColor: '#09090b', scale: 2, useCORS: true });
+        // For Sonic Aura (Single), we want to capture the whole vintage BG, so we use null background.
+        // For Grid (Multi), we want the clean black, so we use #09090b.
+        const exportBg = isSingleTrack ? null : '#09090b';
+        
+        const canvas = await html2canvas(resultsRef.current, { backgroundColor: exportBg, scale: 2, useCORS: true });
         const data = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = data;
@@ -507,8 +530,10 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
 
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-black flex flex-col items-center justify-center p-4">
-         {/* No Background Image - Just Dark BG */}
          
+         {/* Vintage Background - ONLY VISIBLE IF SINGLE TRACK (Sonic Aura) */}
+         {isSingleTrack && <div className="fixed inset-0 vintage-bg z-[-1]"></div>}
+
          <div className="w-full max-w-4xl flex justify-between items-center mb-6 z-10">
              <button onClick={onBack} className="flex items-center gap-2 text-white/70 hover:text-white bg-black/50 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"><ArrowLeft size={18}/> Back</button>
              <button onClick={handleDownload} className="flex items-center gap-2 px-6 py-2 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-colors shadow-lg"><Download size={18} /> Save Poster</button>
@@ -517,7 +542,7 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
          {/* === CONDITIONAL LAYOUTS === */}
          
          {isSingleTrack ? (
-             // === SINGLE TRACK (Sonic Aura) - Morphed Glass Box, Dark BG ===
+             // === SINGLE TRACK (Sonic Aura) - Morphed Glass Box ===
              <div ref={resultsRef} className="sonic-glass w-full max-w-[1000px] rounded-[30px] p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden bg-zinc-950">
                  <div className="flex-1 text-center md:text-left z-10">
                      <div className="text-2xl font-bold mb-2 flex items-center justify-center md:justify-start gap-2"><span>🎵</span> dammitspotifywrapped</div>
@@ -539,32 +564,33 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
              </div>
          ) : (
              // === MULTI TRACK (Eras/Gatekeeper) - CLEAN DARK BG (No Glass), 2x5 GRID ===
-             <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-8 relative overflow-hidden flex flex-col items-center bg-[#09090b]">
-                 <div className="text-center z-10 mb-8">
-                     <div className="text-3xl font-black mb-1 text-white">dammitspotifywrapped</div>
-                     <div className="text-2xl font-black uppercase text-[#1DB954] mb-1">{title.toUpperCase()}</div>
-                     <div className="text-sm uppercase tracking-[0.2em] font-semibold text-zinc-400">spotify wrapped ka better half</div>
+             // IMPORTANT: This container has NO glass class, just simple bg-[#09090b]
+             <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-12 relative overflow-hidden flex flex-col items-center bg-[#09090b] border border-zinc-900 shadow-2xl">
+                 <div className="text-center z-10 mb-10">
+                     <div className="text-4xl font-black mb-2 text-white tracking-tighter">dammitspotifywrapped</div>
+                     <div className="text-2xl font-black uppercase text-[#1DB954] mb-2 tracking-wide">{title.toUpperCase()}</div>
+                     <div className="text-xs uppercase tracking-[0.3em] font-semibold text-zinc-500">spotify wrapped ka better half</div>
                  </div>
 
-                 {/* 2x5 GRID */}
-                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full z-10">
+                 {/* 2x5 GRID - Clean Look */}
+                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full z-10">
                      {tracks.slice(0, 10).map((t: any, i: number) => (
-                         <div key={i} className="song-card bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex flex-col items-center text-center hover:bg-zinc-800 transition-colors group relative">
-                             <div className="relative w-full aspect-square mb-3">
-                                 <img src={t.album.images[0]?.url} className="w-full h-full rounded-lg shadow-md" alt="" crossOrigin="anonymous"/>
-                                 <div className="play-overlay absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg cursor-pointer" onClick={(e) => openSpotify(e, t.external_urls.spotify)}>
-                                    <PlayCircle className="w-10 h-10 text-white opacity-90" />
+                         <div key={i} className="song-card bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex flex-col items-center text-center hover:bg-zinc-800 transition-colors group relative shadow-lg">
+                             <div className="relative w-full aspect-square mb-4">
+                                 <img src={t.album.images[0]?.url} className="w-full h-full rounded-lg shadow-md object-cover" alt="" crossOrigin="anonymous"/>
+                                 <div className="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg cursor-pointer transition-opacity" onClick={(e) => openSpotify(e, t.external_urls.spotify)}>
+                                    <PlayCircle className="w-12 h-12 text-white opacity-90" />
                                  </div>
                              </div>
                              <div className="w-full">
-                                 <p className="font-bold text-white text-xs truncate w-full">{i+1}. {t.name}</p>
-                                 <p className="text-white/60 text-[10px] truncate w-full">{t.artists[0].name}</p>
+                                 <p className="font-bold text-white text-sm truncate w-full mb-1">{i+1}. {t.name}</p>
+                                 <p className="text-zinc-400 text-xs truncate w-full">{t.artists[0].name}</p>
                              </div>
                          </div>
                      ))}
                  </div>
 
-                 <div className="text-[10px] opacity-40 uppercase tracking-widest text-zinc-500 mt-8 z-10">GENERATED BY DAMMITDC</div>
+                 <div className="text-[10px] opacity-40 uppercase tracking-widest text-zinc-600 mt-12 z-10">GENERATED BY DAMMITDC</div>
              </div>
          )}
 
