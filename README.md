@@ -1,20 +1,36 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🎵 dammitspotifywrapped
 
-# Run and deploy your AI Studio app
+**dammitspotifywrapped** is a custom Spotify Insights generator that acts as the "better half" of your Spotify Wrapped. It analyzes your long-term listening history to generate personalized insights and downloadable posters.
 
-This contains everything you need to run your app locally.
+## ✨ Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1oLmc6K1Uzw_miKJsI4WmpyLr_nNL1jOU
+* **Your Eras:** A chronological journey through your top songs, separated into phases (Jan-Apr, May-Aug, Sep-Dec).
+* **Gatekeeper Score:** Analyzes the popularity of your top tracks to determine how "underground" or "mainstream" your taste is (Royal, Common, or Light).
+* **Sonic Aura:** Uses Spotify Audio Features (Valence, Energy, Danceability) to determine your musical vibe (e.g., Main Character, Villain Arc, Doomscrolling).
+* **Downloadable Posters:** Generates high-quality, shareable images of your insights using `html2canvas`.
+* **Custom UI:** Features a premium dark mode aesthetic with spotlight hover effects and glassmorphism.
 
-## Run Locally
+## 🛠️ Tech Stack
 
-**Prerequisites:**  Node.js
+* **Framework:** React + TypeScript (Vite)
+* **Styling:** Tailwind CSS + Custom CSS
+* **API:** Spotify Web API (Authorization Code Flow with PKCE)
+* **Icons:** Lucide React
+* **Export:** HTML2Canvas
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🚀 Getting Started
+
+### 1. Prerequisites
+* Node.js installed on your machine.
+* A [Spotify Developer Account](https://developer.spotify.com/dashboard).
+
+### 2. Installation
+
+Clone the repository and install dependencies:
+
+```bash
+git clone [https://github.com/yourusername/dammitspotifywrapped.git](https://github.com/yourusername/dammitspotifywrapped.git)
+cd dammitspotifywrapped
+npm install
