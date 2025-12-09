@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { 
-  Music, LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2
+  Music, LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Sparkles, Eye
 } from 'lucide-react';
 
 import { 
   redirectToAuthCodeFlow, getAccessToken, fetchTopTracks, fetchAudioFeatures 
 } from './services/spotifyService';
 
+// Ensure AppView in your types.ts includes VIBE_INITIAL_CHOOSE
 import { AppView, SpotifyTrack, VibeMode } from './types';
 
 const App = () => {
@@ -139,14 +140,20 @@ const App = () => {
       pickWinner(VibeMode.MAIN_CHAR, (a, b) => getFeat(b).valence - getFeat(a).valence);
 
       setVibeBuckets(picks);
-      setView(AppView.VIBE_MENU);
+      // UPDATED FLOW: Go to initial choice screen first
+      setView(AppView.VIBE_INITIAL_CHOOSE);
 
     } catch (err: any) { handleError(err); } finally { setLoading(false); }
   };
 
-  const handleSelectVibe = (vibe: VibeMode) => {
-    const tracks = vibeBuckets[vibe];
-    startSelection(tracks, `Sonic Aura: ${vibe}`);
+  // UPDATED: Handles clicking a specific vibe (skips selection, goes to results)
+  const handleSelectSingleVibeAndFinish = (vibeId: string) => {
+      const track = vibeBuckets[vibeId]?.[0];
+      if (track) {
+          setFinalTracks([track]);
+          setResultTitle(`Sonic Aura: ${vibeId}`);
+          setView(AppView.RESULTS);
+      }
   };
 
   const toggleSelection = (id: string) => {
@@ -187,11 +194,22 @@ const App = () => {
         />
       )}
 
+      {/* NEW VIEW: Initial Vibe Choice (Text Only) */}
+      {view === AppView.VIBE_INITIAL_CHOOSE && (
+        <VibeInitialChooseView
+            onSelectVibe={handleSelectSingleVibeAndFinish}
+            onRevealAll={() => setView(AppView.VIBE_MENU)}
+            onBack={() => setView(AppView.DASHBOARD)}
+        />
+      )}
+
+      {/* OLD VIEW: Used for "Reveal All" */}
       {view === AppView.VIBE_MENU && (
         <VibeMenuView 
             buckets={vibeBuckets} 
-            onSelect={handleSelectVibe} 
-            onBack={() => setView(AppView.DASHBOARD)} 
+            // UPDATED: Clicking here also goes straight to results now
+            onSelect={handleSelectSingleVibeAndFinish} 
+            onBack={() => setView(AppView.VIBE_INITIAL_CHOOSE)} 
         />
       )}
 
@@ -219,6 +237,7 @@ const App = () => {
 
 // --- SUB COMPONENTS ---
 
+// ... (LoginView, Header, LoadingOverlay, ErrorBanner, Dashboard, ImageCard remain exactly the same as previous version) ...
 const LoginView = ({ error, loading, onLogin }: any) => (
   <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 relative">
     <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/20"><Music className="w-8 h-8 text-black" /></div>
@@ -241,46 +260,18 @@ const Header = ({ logout }: any) => (
 const LoadingOverlay = () => <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 flex-col gap-4"><Loader2 className="animate-spin text-green-500 w-12 h-12"/><p className="text-green-500 animate-pulse">Analyzing Library...</p></div>;
 const ErrorBanner = ({message}: any) => <div className="bg-red-900/50 text-red-200 p-4 rounded mb-6 text-center">{message}</div>;
 
-// --- DASHBOARD (UPDATED: Added Titles & Descriptions) ---
 const Dashboard = ({ onYourEras, onGatekeeper, onSonicAura }: any) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4">
-    <ImageCard 
-      onClick={onYourEras} 
-      imageSrc="/spot1.jpg"
-      title="Your Eras"
-      description="Travel through your musical history."
-    />
-    <ImageCard 
-      onClick={onGatekeeper} 
-      imageSrc="/spot2.jpg" 
-      title="Gatekeeper Score"
-      description="How unique is your music taste?"
-    />
-    <ImageCard 
-      onClick={onSonicAura} 
-      imageSrc="/spot3.jpg"
-      title="Sonic Aura"
-      description="Discover your true musical vibe."
-    />
+    <ImageCard onClick={onYourEras} imageSrc="/spot1.jpg" title="Your Eras" description="Travel through your musical history." />
+    <ImageCard onClick={onGatekeeper} imageSrc="/spot2.jpg" title="Gatekeeper Score" description="How unique is your music taste?" />
+    <ImageCard onClick={onSonicAura} imageSrc="/spot3.jpg" title="Sonic Aura" description="Discover your true musical vibe." />
   </div>
 );
 
-// --- VERTICAL CARD COMPONENT (UPDATED: Displays Text Overlay) ---
 const ImageCard = ({ onClick, imageSrc, title, description }: any) => (
-  <div 
-    onClick={onClick} 
-    className="relative h-[500px] rounded-[3rem] overflow-hidden cursor-pointer group shadow-2xl shadow-black/70 transition-transform duration-500 hover:scale-[1.02]"
-  >
-    <img 
-      src={imageSrc} 
-      alt={title} 
-      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-    />
-    
-    {/* Gradient Overlay for Text Readability */}
+  <div onClick={onClick} className="relative h-[500px] rounded-[3rem] overflow-hidden cursor-pointer group shadow-2xl shadow-black/70 transition-transform duration-500 hover:scale-[1.02]">
+    <img src={imageSrc} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
-    
-    {/* Text Content */}
     <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
       <h3 className="text-3xl font-bold text-white mb-2 tracking-wide uppercase">{title}</h3>
       <p className="text-zinc-300 text-sm font-medium">{description}</p>
@@ -288,7 +279,9 @@ const ImageCard = ({ onClick, imageSrc, title, description }: any) => (
   </div>
 );
 
-const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
+
+// --- NEW COMPONENT: Initial Vibe Choice (Text Only) ---
+const VibeInitialChooseView = ({ onSelectVibe, onRevealAll, onBack }: any) => {
     const vibes = [
         { id: VibeMode.BEAST, icon: <Flame className="w-5 h-5" />, color: 'red', desc: 'Highest Energy (Motivation)' },
         { id: VibeMode.MAIN_CHAR, icon: <Smile className="w-5 h-5" />, color: 'pink', desc: 'Highest Valence (Happiness)' },
@@ -302,13 +295,60 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
         <div className="animate-in fade-in">
             <div className="flex items-center gap-4 mb-8">
                 <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full"><ArrowLeft /></button>
-                <h2 className="text-3xl font-bold">Choose Your Vibe</h2>
+                <div>
+                    <h2 className="text-3xl font-bold">Which Vibe defines you?</h2>
+                    <p className="text-zinc-400">Choose one to reveal your anthem, or see them all.</p>
+                </div>
+            </div>
+             
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {vibes.map((v) => (
+                    <div key={v.id} onClick={() => onSelectVibe(v.id)} className={`relative overflow-hidden bg-zinc-900/50 border border-zinc-800 hover:border-${v.color}-500/50 hover:bg-zinc-900 rounded-2xl p-6 transition-all cursor-pointer group h-48 flex flex-col justify-between`}>
+                        <div className={`p-3 rounded-xl bg-zinc-950/50 w-fit text-${v.color}-400`}>{v.icon}</div>
+                        <div>
+                            <h3 className={`text-xl font-bold mb-1 group-hover:text-${v.color}-400 transition-colors`}>{v.id}</h3>
+                            <p className="text-sm text-zinc-400">{v.desc}</p>
+                        </div>
+                    </div>
+                ))}
+                
+                {/* THE "REVEAL ALL" CARD */}
+                <div onClick={onRevealAll} className="relative overflow-hidden bg-gradient-to-br from-green-900/30 to-zinc-900/50 border border-green-500/30 hover:border-green-500 hover:from-green-900/50 rounded-2xl p-6 transition-all cursor-pointer group h-48 flex flex-col justify-center items-center text-center col-span-full md:col-span-1 lg:col-span-3">
+                        <div className="p-4 rounded-full bg-green-500/20 text-green-400 mb-4 group-hover:scale-110 transition-transform"><Eye className="w-8 h-8"/></div>
+                        <h3 className="text-2xl font-bold mb-2 text-white">Reveal All Vibes & Songs</h3>
+                        <p className="text-sm text-green-200/70">See your entire sonic profile at once.</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- OLD COMPONENT (Repurposed for "Reveal All") ---
+const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
+    const vibes = [
+        // ... (same vibe definitions as above)
+        { id: VibeMode.BEAST, icon: <Flame className="w-5 h-5" />, color: 'red', desc: 'Highest Energy (Motivation)' },
+        { id: VibeMode.MAIN_CHAR, icon: <Smile className="w-5 h-5" />, color: 'pink', desc: 'Highest Valence (Happiness)' },
+        { id: VibeMode.VILLAIN, icon: <Zap className="w-5 h-5" />, color: 'orange', desc: 'High Energy + Low Valence (Angry)' },
+        { id: VibeMode.LATE_NIGHT, icon: <Moon className="w-5 h-5" />, color: 'indigo', desc: 'Highest Danceability' },
+        { id: VibeMode.DOOMSCROLLING, icon: <Frown className="w-5 h-5" />, color: 'gray', desc: 'Heard for hours on loop' },
+        { id: VibeMode.TIME_TRAVELER, icon: <Clock className="w-5 h-5" />, color: 'cyan', desc: 'Oldest Release Date' },
+    ];
+
+    return (
+        <div className="animate-in fade-in">
+            <div className="flex items-center gap-4 mb-8">
+                {/* Back button goes back to initial choice */}
+                <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full"><ArrowLeft /></button>
+                <h2 className="text-3xl font-bold">Your Full Sonic Profile</h2>
             </div>
              
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {vibes.map((v) => {
                     const topSong = buckets[v.id]?.[0];
                     return (
+                        // onSelect now goes straight to results view for that vibe
                         <div key={v.id} onClick={() => topSong && onSelect(v.id)} className={`relative overflow-hidden bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition-all group h-64 flex flex-col justify-between ${topSong ? 'cursor-pointer hover:border-white/20' : 'opacity-50 cursor-not-allowed'}`}>
                             {topSong && <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity"><img src={topSong.album.images[0]?.url} className="w-full h-full object-cover blur-xl" alt="" /></div>}
                             <div className="relative z-10 flex justify-between items-start"><div className={`p-3 rounded-xl bg-zinc-950/50 backdrop-blur text-${v.color}-400`}>{v.icon}</div></div>
@@ -330,6 +370,7 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
     );
 };
 
+// ... (SelectionView remains exactly the same) ...
 const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, onBack }: any) => {
     const isUnderground = title === 'Gatekeeper Score';
     const isTimeline = title === 'Your Eras';
@@ -398,24 +439,26 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
     );
 };
 
+
+// --- RESULTS VIEW (UPDATED: Text Changes & Aesthetic Single-Song Layout) ---
 const ResultsView = ({ title, tracks, onBack }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
+    const isSingleTrack = tracks.length === 1;
+    const singleTrack = tracks[0];
+
+    // Determine the main title based on the context title
+    let mainTitleDisplay = title;
+    if (title.includes("Eras")) mainTitleDisplay = "My Eras";
+    else if (title.includes("Gatekeeper")) mainTitleDisplay = "Gatekeeper Score";
 
     const handleDownload = async () => {
         if (!resultsRef.current) return;
-         
-        // Wait a tiny bit for images to load if needed
         await new Promise(resolve => setTimeout(resolve, 500));
-
-        const canvas = await html2canvas(resultsRef.current, { 
-            backgroundColor: '#09090b', 
-            scale: 2,
-            useCORS: true 
-        });
+        const canvas = await html2canvas(resultsRef.current, { backgroundColor: '#09090b', scale: 2, useCORS: true });
         const data = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = data;
-        link.download = `spotify-insights-${title.replace(/\s+/g, '-').toLowerCase()}.png`;
+        link.download = `spotify-insights-${mainTitleDisplay.replace(/\s+/g, '-').toLowerCase()}.png`;
         link.click();
     };
 
@@ -424,30 +467,54 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
         <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
                 <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full"><ArrowLeft /></button>
-                <h2 className="text-3xl font-bold">{title}</h2>
+                <h2 className="text-3xl font-bold">Your Poster</h2>
             </div>
             <button onClick={handleDownload} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black font-bold rounded-full hover:bg-green-400 transition-colors">
                 <Download className="w-4 h-4" /> Save Poster
             </button>
         </div>
 
-        <div ref={resultsRef} className="p-8 bg-zinc-950 border border-zinc-800 rounded-3xl">
-            <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-green-500 mb-2">My Spotify Insights</h1>
-                <p className="text-zinc-400 uppercase tracking-widest text-sm">{title}</p>
+        {/* THE POSTER CONTAINER */}
+        <div ref={resultsRef} className={`p-8 bg-zinc-950 border border-zinc-800 rounded-3xl relative overflow-hidden ${isSingleTrack ? 'flex flex-col items-center justify-center min-h-[600px]' : ''}`}>
+            
+            {/* Aesthetic blurred background for single track mode */}
+            {isSingleTrack && (
+                 <div className="absolute inset-0 z-0 opacity-40 blur-[100px] scale-150 saturate-150 pointer-events-none">
+                     <img src={singleTrack.album.images[0]?.url} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                 </div>
+            )}
+
+            <div className="text-center mb-8 z-10 relative">
+                {/* UPDATED TEXT: Main Title based on feature */}
+                <h1 className="text-5xl font-black text-green-500 mb-2 tracking-tight">{mainTitleDisplay.toUpperCase()}</h1>
+                {/* UPDATED TEXT: New Subtitle */}
+                <p className="text-zinc-300 uppercase tracking-[0.2em] text-xs font-bold">spotify wrapped ka better half</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                {tracks.map((track: any, idx: number) => (
-                    <div key={track.id} className="group bg-zinc-900 rounded-xl p-4 relative border border-zinc-800">
-                    <div className="aspect-square mb-4 overflow-hidden rounded-lg relative shadow-lg">
-                        <img src={track.album.images[0]?.url} className="w-full h-full object-cover" alt="" crossOrigin="anonymous" />
-                    </div>
-                    <h3 className="font-bold truncate text-white">{idx + 1}. {track.name}</h3>
-                    <p className="text-sm text-zinc-400 truncate">{track.artists.map((a: any) => a.name).join(', ')}</p>
-                    </div>
-                ))}
-            </div>
-            <div className="mt-8 text-center text-zinc-600 text-xs font-mono">Generated by Spotify Insights</div>
+
+            {isSingleTrack ? (
+                 // --- AESTHETIC SINGLE TRACK LAYOUT ---
+                 <div className="z-10 relative bg-zinc-900/60 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center max-w-md">
+                     <img src={singleTrack.album.images[0]?.url} alt={singleTrack.name} className="w-72 h-72 rounded-2xl shadow-lg mb-6" crossOrigin="anonymous" />
+                     <h2 className="text-3xl font-bold text-center mb-2 text-white">{singleTrack.name}</h2>
+                     <p className="text-xl text-green-400 font-medium">{singleTrack.artists[0].name}</p>
+                 </div>
+            ) : (
+                // --- STANDARD GRID LAYOUT (Eras / Gatekeeper) ---
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 z-10 relative">
+                    {tracks.map((track: any, idx: number) => (
+                        <div key={track.id} className="group bg-zinc-900/80 backdrop-blur-sm rounded-xl p-4 relative border border-zinc-800/50">
+                        <div className="aspect-square mb-4 overflow-hidden rounded-lg relative shadow-lg">
+                            <img src={track.album.images[0]?.url} className="w-full h-full object-cover" alt="" crossOrigin="anonymous" />
+                        </div>
+                        <h3 className="font-bold truncate text-white text-sm">{idx + 1}. {track.name}</h3>
+                        <p className="text-xs text-zinc-400 truncate">{track.artists.map((a: any) => a.name).join(', ')}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+            
+            {/* UPDATED FOOTER TEXT */}
+            <div className="mt-12 text-center text-zinc-500 text-[10px] font-mono z-10 relative uppercase tracking-widest">GENERATED BY DAMMITDC</div>
         </div>
       </div>
     );
