@@ -3,7 +3,7 @@ import { SpotifyTrack, AudioFeatures } from "../types";
 export const CLIENT_ID = "1dbe1040e81d4ca8b1f2e4646d16e9e1";
 // ✅ Your Replit URL
 const REDIRECT_URI =
-  "https://dammit-spotify.netlify.app";
+  "https://dammit-spotify.netlify.app/";
 
 const SCOPES = ["user-top-read", "user-read-private", "user-read-email"];
 
