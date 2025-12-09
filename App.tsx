@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { 
-  LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Eye
+  LogIn, ArrowLeft, Zap, Moon, Clock, Smile, Frown, Download, Check, BarChart3, Flame, Loader2, Eye, PlayCircle, ExternalLink
 } from 'lucide-react';
 
 // Assuming these services exist in your project structure
@@ -18,35 +18,27 @@ const GLOBAL_STYLES = `
   ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
 
-  /* Vintage Background for Poster */
-  .vintage-bg {
-    background-image: url('https://i.ibb.co/f2FygQj/image-1.png');
-    background-size: cover;
-    background-position: center;
+  /* Sonic Aura Specific Glass (Morphed Box) */
+  .sonic-glass {
+    background: rgba(255, 255, 255, 0.05); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   }
 
-  /* Glass Container Base */
-  .poster-glass {
-    background: rgba(0, 0, 0, 0.4); 
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
-  }
-
-  /* Dashboard Spotlight/Glow Effects */
+  /* Dashboard Cards - Clean Lift, No Scale Jitter */
   .spotlight-card {
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   .spotlight-card:hover {
-    transform: translateY(-5px); /* Subtle lift */
-    box-shadow: 0 20px 40px -10px rgba(255, 255, 255, 0.15); /* clean soft glow */
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -5px rgba(0,0,0,0.6); 
   }
   
-  /* Specific colored glows for specific cards */
-  .card-eras:hover { box-shadow: 0 20px 50px -10px rgba(56, 189, 248, 0.3); } /* Light Blue */
-  .card-gate:hover { box-shadow: 0 20px 50px -10px rgba(50, 205, 50, 0.3); } /* Green */
-  .card-sonic:hover { box-shadow: 0 20px 50px -10px rgba(255, 215, 0, 0.3); } /* Gold */
+  /* Song Card Hover for Play Button */
+  .song-card .play-overlay { opacity: 0; transition: opacity 0.2s ease; }
+  .song-card:hover .play-overlay { opacity: 1; }
 `;
 
 const App = () => {
@@ -66,7 +58,7 @@ const App = () => {
 
   // --- Auth & Init ---
   useEffect(() => {
-    document.title = "dammitspotify"; // Set Head Title
+    document.title = "dammitspotify"; 
     
     if (effectRan.current === true) return;
     const params = new URLSearchParams(window.location.search);
@@ -94,8 +86,9 @@ const App = () => {
     setView(AppView.LOGIN);
   };
 
-  const startSelection = (tracks: SpotifyTrack[], title: string, isTimeline = false) => {
-    const limit = isTimeline ? 50 : 25;
+  const startSelection = (tracks: SpotifyTrack[], title: string) => {
+    // FIXED: Strict limit of 25 for everything
+    const limit = 25; 
     setCandidates(tracks.slice(0, limit));
     setSelectedIds(new Set()); 
     setResultTitle(title);
@@ -113,7 +106,8 @@ const App = () => {
           ...t,
           phase: index < sorted.length / 3 ? 1 : index < (2 * sorted.length) / 3 ? 2 : 3
       }));
-      startSelection(phasedTracks, 'Your Eras', true);
+      // Passing isTimeline=true logic implicitly by title check later, but limiting to 25
+      startSelection(phasedTracks, 'Your Eras');
     } catch (err: any) { handleError(err); } finally { setLoading(false); }
   };
 
@@ -204,13 +198,18 @@ const App = () => {
     if (err.message === 'Login failed.') logout();
   };
 
+  const openSpotify = (e: React.MouseEvent, url: string) => {
+    e.stopPropagation();
+    window.open(url, '_blank');
+  };
+
   if (view === AppView.LOGIN) return <LoginView error={error} loading={loading} onLogin={handleLogin} />;
     
   return (
     <div className="min-h-screen bg-zinc-950 p-6 md:p-12 text-white font-sans relative overflow-x-hidden">
       <style>{GLOBAL_STYLES}</style>
       
-      {/* Background for non-result views */}
+      {/* Background for non-result views - Clean Radial */}
       {view !== AppView.RESULTS && (
          <div className="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000000_100%)] pointer-events-none"></div>
       )}
@@ -240,7 +239,8 @@ const App = () => {
             <VibeMenuView 
                 buckets={vibeBuckets} 
                 onSelect={handleSelectSingleVibeAndFinish} 
-                onBack={() => setView(AppView.VIBE_INITIAL_CHOOSE)} 
+                onBack={() => setView(AppView.VIBE_INITIAL_CHOOSE)}
+                openSpotify={openSpotify}
             />
         )}
 
@@ -252,6 +252,7 @@ const App = () => {
             onToggle={toggleSelection}
             onConfirm={confirmSelection}
             onBack={() => setView(AppView.DASHBOARD)}
+            openSpotify={openSpotify}
             />
         )}
 
@@ -260,6 +261,7 @@ const App = () => {
             title={resultTitle}
             tracks={finalTracks}
             onBack={() => setView(AppView.DASHBOARD)}
+            openSpotify={openSpotify}
             />
         )}
       </div>
@@ -286,9 +288,7 @@ const LoginView = ({ error, loading, onLogin }: any) => (
 const Header = ({ logout }: any) => (
   <header className="flex justify-between items-center mb-8">
     <div className="flex items-center gap-3">
-        {/* LOGO IMAGE REPLACED HERE - png */}
         <img src="logo.png" alt="Logo" className="w-12 h-12 rounded-full border border-white/10" />
-        {/* FONT SIZE INCREASED */}
         <b className="tracking-tight text-2xl font-black">dammitspotifywrapped</b>
     </div>
     <button onClick={logout} className="text-zinc-400 hover:text-white transition-colors">Log out</button>
@@ -298,21 +298,18 @@ const Header = ({ logout }: any) => (
 const LoadingOverlay = () => <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 flex-col gap-4"><Loader2 className="animate-spin text-green-500 w-12 h-12"/><p className="text-green-500 animate-pulse">Analyzing Library...</p></div>;
 const ErrorBanner = ({message}: any) => <div className="bg-red-900/50 text-red-200 p-4 rounded mb-6 text-center">{message}</div>;
 
-// UPDATED DASHBOARD: Clean Spotlight Effect + Fixed Images
+// UPDATED DASHBOARD: Clean Lift (No Scale)
 const Dashboard = ({ onYourEras, onGatekeeper, onSonicAura }: any) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4">
-    <ImageCard onClick={onYourEras} imageSrc="/spot1.jpg" title="Your Eras" description="Travel through your musical history." extraClass="card-eras" />
-    <ImageCard onClick={onGatekeeper} imageSrc="/spot2.jpg" title="Gatekeeper Score" description="How unique is your music taste?" extraClass="card-gate" />
-    <ImageCard onClick={onSonicAura} imageSrc="/spot3.jpg" title="Sonic Aura" description="Discover your true musical vibe." extraClass="card-sonic" />
+    <ImageCard onClick={onYourEras} imageSrc="/spot1.jpg" title="Your Eras" description="Travel through your musical history." />
+    <ImageCard onClick={onGatekeeper} imageSrc="/spot2.jpg" title="Gatekeeper Score" description="How unique is your music taste?" />
+    <ImageCard onClick={onSonicAura} imageSrc="/spot3.jpg" title="Sonic Aura" description="Discover your true musical vibe." />
   </div>
 );
 
-const ImageCard = ({ onClick, imageSrc, title, description, extraClass }: any) => (
-  <div onClick={onClick} className={`spotlight-card ${extraClass} relative h-[480px] rounded-[2rem] overflow-hidden cursor-pointer group bg-zinc-900 border border-white/10`}>
-    {/* Image Fit Fix: object-cover ensures it fills the space */}
-    <img src={imageSrc} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-    
-    {/* Glass Bottom Overlay - Readable Text */}
+const ImageCard = ({ onClick, imageSrc, title, description }: any) => (
+  <div onClick={onClick} className={`spotlight-card relative h-[480px] rounded-[2rem] overflow-hidden cursor-pointer bg-zinc-900 border border-white/10`}>
+    <img src={imageSrc} alt={title} className="w-full h-full object-cover" />
     <div className="absolute bottom-0 left-0 width-full w-full p-6 pb-8 bg-gradient-to-b from-transparent via-black/80 to-black/95 backdrop-blur-[2px]">
       <h3 className="text-3xl font-black text-white mb-2 tracking-wide uppercase drop-shadow-md">{title}</h3>
       <p className="text-zinc-200 text-sm font-medium opacity-90">{description}</p>
@@ -321,7 +318,6 @@ const ImageCard = ({ onClick, imageSrc, title, description, extraClass }: any) =
 );
 
 const VibeInitialChooseView = ({ onSelectVibe, onRevealAll, onBack }: any) => {
-    // ... (Same Vibe Logic, just visual cleanup)
     const vibes = [
         { id: VibeMode.BEAST, icon: <Flame className="w-5 h-5" />, color: 'red', desc: 'Highest Energy (Motivation)' },
         { id: VibeMode.MAIN_CHAR, icon: <Smile className="w-5 h-5" />, color: 'pink', desc: 'Highest Valence (Happiness)' },
@@ -361,13 +357,13 @@ const VibeInitialChooseView = ({ onSelectVibe, onRevealAll, onBack }: any) => {
     );
 };
 
-const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
+const VibeMenuView = ({ buckets, onSelect, onBack, openSpotify }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
 
     const handleDownload = async () => {
         if (!resultsRef.current) return;
         await new Promise(resolve => setTimeout(resolve, 500));
-        const canvas = await html2canvas(resultsRef.current, { backgroundColor: '#000000', scale: 2, useCORS: true });
+        const canvas = await html2canvas(resultsRef.current, { backgroundColor: '#09090b', scale: 2, useCORS: true });
         const data = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = data;
@@ -383,9 +379,8 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
                     <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full hover:bg-zinc-800"><ArrowLeft /></button>
                     <h2 className="text-3xl font-bold">Your Full Sonic Profile</h2>
                 </div>
-                {/* SAVE POSTER ADDED HERE */}
                 <button onClick={handleDownload} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black font-bold rounded-full hover:bg-green-400 transition-colors">
-                    <Download className="w-4 h-4" /> Save
+                    <Download className="w-4 h-4" /> Save Poster
                 </button>
             </div>
             
@@ -395,8 +390,14 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
                         const track = buckets[v]?.[0];
                         if(!track) return null;
                         return (
-                            <div key={v} onClick={() => onSelect(v)} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-zinc-800 transition-colors">
-                                <img src={track.album.images[0]?.url} className="w-16 h-16 rounded-md shadow-lg" alt="" crossOrigin="anonymous"/>
+                            <div key={v} onClick={() => onSelect(v)} className="song-card bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-zinc-800 transition-colors relative group">
+                                <div className="relative w-16 h-16 shrink-0">
+                                    <img src={track.album.images[0]?.url} className="w-full h-full rounded-md shadow-lg" alt="" crossOrigin="anonymous"/>
+                                    {/* Play Overlay */}
+                                    <div className="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center rounded-md" onClick={(e) => openSpotify(e, track.external_urls.spotify)}>
+                                        <PlayCircle className="text-white w-8 h-8" />
+                                    </div>
+                                </div>
                                 <div className="overflow-hidden">
                                     <h4 className="font-bold text-lg text-white">{v}</h4>
                                     <p className="text-sm text-zinc-400 truncate">{track.name}</p>
@@ -405,13 +406,13 @@ const VibeMenuView = ({ buckets, onSelect, onBack }: any) => {
                         )
                     })}
                 </div>
-                <div className="mt-8 text-center text-xs text-zinc-600 uppercase tracking-widest">Generated by dammitspotifywrapped</div>
+                <div className="mt-8 text-center text-xs text-zinc-600 uppercase tracking-widest">Generated by dammitdc</div>
             </div>
         </div>
     )
 }
 
-const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, onBack }: any) => {
+const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, onBack, openSpotify }: any) => {
     const isUnderground = title === 'Gatekeeper Score';
     const isTimeline = title === 'Your Eras';
 
@@ -425,7 +426,6 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
           <button onClick={onConfirm} disabled={selectedIds.size === 0} className="px-6 py-2 bg-[#1DB954] text-black font-bold rounded-full disabled:opacity-30 transition-all">Generate</button>
         </div>
       
-        {/* === NEW COLOR BAR FOR ERAS === */}
         {isTimeline && (
              <div className="mb-8 p-6 bg-zinc-900 rounded-2xl border border-zinc-800">
                 <h3 className="text-sm font-bold text-zinc-400 mb-3 uppercase tracking-wider">Your Music Timeline</h3>
@@ -453,7 +453,6 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
                 const isSelected = selectedIds.has(track.id);
                 const limit = title.includes('Sonic Aura') ? 1 : 10;
                 const isDisabled = !isSelected && selectedIds.size >= limit;
-                // Timeline Color Logic
                 let phaseClass = "";
                 if (isTimeline) {
                      if (track.phase === 1) phaseClass = "border-l-4 border-l-blue-500";
@@ -462,9 +461,16 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
                 }
 
                 return (
-                    <div key={track.id} onClick={() => !isDisabled && onToggle(track.id)} className={`flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer ${phaseClass} ${isSelected ? 'bg-green-900/20 border-green-500' : isDisabled ? 'opacity-40 border-transparent' : 'bg-zinc-900/50 border-white/5 hover:bg-zinc-900'}`}>
+                    <div key={track.id} onClick={() => !isDisabled && onToggle(track.id)} className={`song-card flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer ${phaseClass} ${isSelected ? 'bg-green-900/20 border-green-500' : isDisabled ? 'opacity-40 border-transparent' : 'bg-zinc-900/50 border-white/5 hover:bg-zinc-900'}`}>
                         <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'bg-green-500 border-green-500' : 'border-zinc-600'}`}>{isSelected && <Check className="w-4 h-4 text-black" />}</div>
-                        <img src={track.album.images[0]?.url} className="w-12 h-12 rounded" alt="" />
+                        
+                        <div className="relative w-12 h-12 shrink-0">
+                             <img src={track.album.images[0]?.url} className="w-full h-full rounded" alt="" />
+                             <div className="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center rounded" onClick={(e) => openSpotify(e, track.external_urls.spotify)}>
+                                <PlayCircle className="text-white w-6 h-6" />
+                             </div>
+                        </div>
+
                         <div className="overflow-hidden flex-1">
                             <h4 className="font-bold truncate text-sm text-white">{track.name}</h4>
                             <div className="flex items-center gap-2 mt-1">
@@ -480,9 +486,9 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
 };
 
 // UPDATED RESULTS VIEW: 
-// 1. Single Track = Glass Layout (Text Left, Card Right)
-// 2. Multi Track (Eras/Gatekeeper) = Grid Poster Layout (2 Rows x 5 Cols)
-const ResultsView = ({ title, tracks, onBack }: any) => {
+// 1. Single Track = Morphed Glass Box (No BG Image)
+// 2. Multi Track = Clean Dark BG (No Glass, No BG Image)
+const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
     const isSingleTrack = tracks.length === 1;
     const singleTrack = tracks[0];
@@ -490,7 +496,8 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
     const handleDownload = async () => {
         if (!resultsRef.current) return;
         await new Promise(resolve => setTimeout(resolve, 500));
-        const canvas = await html2canvas(resultsRef.current, { backgroundColor: null, scale: 2, useCORS: true });
+        // Use darker bg for canvas export if needed, or null to capture CSS bg
+        const canvas = await html2canvas(resultsRef.current, { backgroundColor: '#09090b', scale: 2, useCORS: true });
         const data = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = data;
@@ -500,9 +507,8 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
 
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-black flex flex-col items-center justify-center p-4">
-         {/* Vintage Background (Fixed) */}
-         <div className="fixed inset-0 vintage-bg z-[-1]"></div>
-
+         {/* No Background Image - Just Dark BG */}
+         
          <div className="w-full max-w-4xl flex justify-between items-center mb-6 z-10">
              <button onClick={onBack} className="flex items-center gap-2 text-white/70 hover:text-white bg-black/50 px-4 py-2 rounded-full backdrop-blur-md border border-white/10"><ArrowLeft size={18}/> Back</button>
              <button onClick={handleDownload} className="flex items-center gap-2 px-6 py-2 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-colors shadow-lg"><Download size={18} /> Save Poster</button>
@@ -511,34 +517,45 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
          {/* === CONDITIONAL LAYOUTS === */}
          
          {isSingleTrack ? (
-             // === SINGLE TRACK (Sonic Aura) - Glass Layout (Left Text, Right Card) ===
-             <div ref={resultsRef} className="poster-glass w-full max-w-[1000px] rounded-[30px] p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden">
+             // === SINGLE TRACK (Sonic Aura) - Morphed Glass Box, Dark BG ===
+             <div ref={resultsRef} className="sonic-glass w-full max-w-[1000px] rounded-[30px] p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden bg-zinc-950">
                  <div className="flex-1 text-center md:text-left z-10">
                      <div className="text-2xl font-bold mb-2 flex items-center justify-center md:justify-start gap-2"><span>🎵</span> dammitspotifywrapped</div>
                      <div className="text-sm md:text-base uppercase tracking-[0.2em] opacity-80 font-semibold mb-8 text-green-300">Sonic Aura: {title}</div>
                      <div className="text-[10px] opacity-50 uppercase tracking-widest text-white mt-10">Generated by dammitdc</div>
                  </div>
                  <div className="flex-none w-full md:w-[320px] z-10">
-                     <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-[20px] p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
-                         <img src={singleTrack.album.images[0]?.url} alt="Art" className="w-full aspect-square object-cover rounded-xl mb-5 shadow-lg" crossOrigin="anonymous" />
+                     <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-[20px] p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)] song-card relative group">
+                         <div className="relative mb-5">
+                             <img src={singleTrack.album.images[0]?.url} alt="Art" className="w-full aspect-square object-cover rounded-xl shadow-lg" crossOrigin="anonymous" />
+                             <div className="play-overlay absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl cursor-pointer" onClick={(e) => openSpotify(e, singleTrack.external_urls.spotify)}>
+                                 <PlayCircle className="w-16 h-16 text-white opacity-80" />
+                             </div>
+                         </div>
                          <h1 className="text-2xl font-bold text-white mb-1 leading-tight drop-shadow-md">{singleTrack.name}</h1>
                          <p className="text-[#57B685] font-bold uppercase tracking-widest text-sm">{singleTrack.artists[0].name}</p>
                      </div>
                  </div>
              </div>
          ) : (
-             // === MULTI TRACK (Eras/Gatekeeper) - GRID POSTER LAYOUT (Top Title, Bottom 2x5 Grid) ===
-             <div ref={resultsRef} className="poster-glass w-full max-w-[1100px] rounded-[30px] p-8 relative overflow-hidden flex flex-col items-center">
+             // === MULTI TRACK (Eras/Gatekeeper) - CLEAN DARK BG (No Glass), 2x5 GRID ===
+             <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-8 relative overflow-hidden flex flex-col items-center bg-[#09090b]">
                  <div className="text-center z-10 mb-8">
                      <div className="text-3xl font-black mb-1 text-white">dammitspotifywrapped</div>
-                     <div className="text-sm uppercase tracking-[0.3em] font-semibold text-green-400">{title}</div>
+                     <div className="text-2xl font-black uppercase text-[#1DB954] mb-1">{title.toUpperCase()}</div>
+                     <div className="text-sm uppercase tracking-[0.2em] font-semibold text-zinc-400">spotify wrapped ka better half</div>
                  </div>
 
                  {/* 2x5 GRID */}
                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full z-10">
                      {tracks.slice(0, 10).map((t: any, i: number) => (
-                         <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 p-3 rounded-xl flex flex-col items-center text-center hover:bg-white/10 transition-colors">
-                             <img src={t.album.images[0]?.url} className="w-full aspect-square rounded-lg mb-3 shadow-md" alt="" crossOrigin="anonymous"/>
+                         <div key={i} className="song-card bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex flex-col items-center text-center hover:bg-zinc-800 transition-colors group relative">
+                             <div className="relative w-full aspect-square mb-3">
+                                 <img src={t.album.images[0]?.url} className="w-full h-full rounded-lg shadow-md" alt="" crossOrigin="anonymous"/>
+                                 <div className="play-overlay absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg cursor-pointer" onClick={(e) => openSpotify(e, t.external_urls.spotify)}>
+                                    <PlayCircle className="w-10 h-10 text-white opacity-90" />
+                                 </div>
+                             </div>
                              <div className="w-full">
                                  <p className="font-bold text-white text-xs truncate w-full">{i+1}. {t.name}</p>
                                  <p className="text-white/60 text-[10px] truncate w-full">{t.artists[0].name}</p>
@@ -547,7 +564,7 @@ const ResultsView = ({ title, tracks, onBack }: any) => {
                      ))}
                  </div>
 
-                 <div className="text-[10px] opacity-40 uppercase tracking-widest text-white mt-8 z-10">Generated by dammitdc</div>
+                 <div className="text-[10px] opacity-40 uppercase tracking-widest text-zinc-500 mt-8 z-10">GENERATED BY DAMMITDC</div>
              </div>
          )}
 
