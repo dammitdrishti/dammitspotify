@@ -400,9 +400,10 @@ const VibeMenuView = ({ buckets, onSelect, onBack, openSpotify }: any) => {
                                         <PlayCircle className="text-white w-8 h-8" />
                                     </div>
                                 </div>
+                                {/* UPDATED: Cleaner and more visible text */}
                                 <div className="overflow-hidden">
-                                    <h4 className="font-bold text-lg text-white">{v}</h4>
-                                    <p className="text-sm text-zinc-400 truncate">{track.name}</p>
+                                    <h4 className="font-black text-xl text-white mb-1">{v}</h4>
+                                    <p className="text-base text-zinc-200 font-medium truncate">{track.name}</p>
                                 </div>
                             </div>
                         )
@@ -437,12 +438,13 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
         </div>
       
         {isTimeline && (
+             // UPDATED: Purple Shades for Eras Timeline
              <div className="mb-8 p-6 bg-zinc-900 rounded-2xl border border-zinc-800">
                 <h3 className="text-sm font-bold text-zinc-400 mb-3 uppercase tracking-wider">Your Music Timeline</h3>
                 <div className="flex h-8 rounded-lg overflow-hidden w-full">
-                    <div className="flex-1 bg-gradient-to-r from-blue-900 to-blue-600 flex items-center justify-center text-[10px] md:text-xs font-bold text-white/90">JAN - APR</div>
-                    <div className="flex-1 bg-gradient-to-r from-purple-900 to-purple-600 flex items-center justify-center text-[10px] md:text-xs font-bold text-white/90">MAY - AUG</div>
-                    <div className="flex-1 bg-gradient-to-r from-pink-900 to-pink-600 flex items-center justify-center text-[10px] md:text-xs font-bold text-white/90">SEP - DEC</div>
+                    <div className="flex-1 bg-gradient-to-r from-purple-400 to-purple-500 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">JAN - APR</div>
+                    <div className="flex-1 bg-gradient-to-r from-purple-500 to-purple-700 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">MAY - AUG</div>
+                    <div className="flex-1 bg-gradient-to-r from-purple-700 to-purple-900 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">SEP - DEC</div>
                 </div>
             </div>
         )}
@@ -466,9 +468,10 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
                 
                 let phaseClass = "";
                 if (isTimeline) {
-                     if (track.phase === 1) phaseClass = "border-l-4 border-l-blue-500";
-                     if (track.phase === 2) phaseClass = "border-l-4 border-l-purple-500";
-                     if (track.phase === 3) phaseClass = "border-l-4 border-l-pink-500";
+                     // UPDATED: Purple Shades for Eras Borders
+                     if (track.phase === 1) phaseClass = "border-l-4 border-l-purple-400";
+                     if (track.phase === 2) phaseClass = "border-l-4 border-l-purple-600";
+                     if (track.phase === 3) phaseClass = "border-l-4 border-l-purple-900";
                 }
 
                 // Uniqueness Score Logic (for Gatekeeper)
@@ -490,7 +493,6 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
                             <h4 className="font-bold truncate text-sm text-white">{track.name}</h4>
                             <div className="flex items-center gap-2 mt-1">
                                 <p className="text-xs text-zinc-400 truncate max-w-[60%]">{track.artists.map((a: any) => a.name).join(', ')}</p>
-                                {/* RESTORED PERCENTAGE DISPLAY */}
                                 {isUnderground && uniqueInfo && (
                                     <span className={`text-[10px] font-bold ${uniqueInfo.color} border border-white/10 px-1.5 py-0.5 rounded`}>
                                         {uniqueness}% {uniqueInfo.label}
@@ -506,7 +508,7 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
     );
 };
 
-// UPDATED RESULTS VIEW: SCROLLABLE, CLEAN, NO GLASS FOR ERAS/GATEKEEPER
+// UPDATED RESULTS VIEW: SCROLLABLE, CLEAN
 const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
     const isSingleTrack = tracks.length === 1;
@@ -515,7 +517,7 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const handleDownload = async () => {
         if (!resultsRef.current) return;
         await new Promise(resolve => setTimeout(resolve, 500));
-        const exportBg = isSingleTrack ? null : '#18181b'; // Dark Zinc for Grid Poster
+        const exportBg = isSingleTrack ? null : '#0d0d0d'; // Dark BG for Grid Poster
         const canvas = await html2canvas(resultsRef.current, { backgroundColor: exportBg, scale: 2, useCORS: true });
         const data = canvas.toDataURL('image/png');
         const link = document.createElement('a');
@@ -531,7 +533,6 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
         return { label: 'LIGHT', color: 'text-lime-200' };
     };
 
-    // FIXED: Using standard block layout with min-h-screen to ensure scrolling works
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-black">
          
@@ -570,16 +571,16 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
                      </div>
                  </div>
              ) : (
-                 // === MULTI TRACK (Eras/Gatekeeper) - REFINED CLEAN CARD LAYOUT ===
-                 // Background: Zinc-900 (Dark Grey/Black Card). No transparency. Rounded.
-                 <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-8 md:p-12 relative overflow-hidden flex flex-col items-center bg-zinc-900 border border-zinc-800 shadow-2xl">
+                 // === MULTI TRACK (Eras/Gatekeeper) - CLEAN CARD LAYOUT ===
+                 <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-8 md:p-12 relative overflow-hidden flex flex-col items-center bg-[#0d0d0d] border border-zinc-900 shadow-2xl">
                      
                      {/* Top-Left Watermark Branding */}
-                     <div className="absolute top-8 left-8 flex items-center gap-2 opacity-80">
-                         <span className="font-black text-sm tracking-tighter text-white">dammitspotifywrapped</span>
+                     <div className="absolute top-8 left-8 flex items-center gap-2 opacity-50">
+                         <span className="text-xl">🎵</span>
+                         <span className="font-bold text-sm tracking-tighter text-white">dammitspotifywrapped</span>
                      </div>
 
-                     <div className="text-center z-10 mb-10 mt-8">
+                     <div className="text-center z-10 mb-10 mt-6">
                          {/* Big Green Title */}
                          <div className="text-4xl md:text-5xl font-black mb-3 text-[#1DB954] uppercase tracking-tighter drop-shadow-sm">{title}</div>
                          {/* Subtitle */}
@@ -594,7 +595,7 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
                              const uniqueInfo = getUniquenessLabel(t.popularity);
 
                              return (
-                                <div key={i} className="song-card bg-black/30 border border-white/5 p-4 rounded-xl flex flex-col items-center text-center hover:bg-black/50 transition-colors group relative shadow-lg">
+                                <div key={i} className="song-card bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-xl flex flex-col items-center text-center hover:bg-zinc-800 transition-colors group relative shadow-lg">
                                     <div className="relative w-full aspect-square mb-4">
                                         <img src={t.album.images[0]?.url} className="w-full h-full rounded-lg shadow-md object-cover" alt="" crossOrigin="anonymous"/>
                                         <div className="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg cursor-pointer transition-opacity" onClick={(e) => openSpotify(e, t.external_urls.spotify)}>
@@ -603,13 +604,13 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
                                     </div>
                                     <div className="w-full">
                                         <p className="font-bold text-white text-sm truncate w-full mb-1">{i+1}. {t.name}</p>
-                                        <p className="text-zinc-500 text-xs truncate w-full font-medium mb-1">{t.artists[0].name}</p>
+                                        <p className="text-zinc-500 text-xs truncate w-full font-medium mb-2">{t.artists[0].name}</p>
                                         
                                         {/* RESTORED PERCENTAGE FOR POSTER */}
-                                        {isGatekeeper && (
-                                            <p className={`text-[10px] font-bold ${uniqueInfo.color} uppercase tracking-wider`}>
+                                        {isGatekeeper && uniqueInfo && (
+                                            <div className={`text-[10px] font-bold ${uniqueInfo.color} uppercase tracking-wider bg-black/30 py-1 px-2 rounded-full inline-block`}>
                                                 {uniqueness}% {uniqueInfo.label}
-                                            </p>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
