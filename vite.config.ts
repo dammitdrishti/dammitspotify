@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
       allowedHosts: [
         "054b2b25-7d24-4785-af83-0b5c07e3e027-00-25z67ey8dxjtc.pike.replit.dev",
         "054b2b25-7d24-4785-af83-0b5c07e3e027-00-25z67ey8dxjtc.pike.replit.dev",
-        "https://dammitspotifywrapped.netlify.app/",
+        
       ], // <--- CHANGED TO 'true' (simpler & safer for Replit)
       hmr: {
         clientPort: 443,
