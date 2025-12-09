@@ -1,26 +1,23 @@
 import { SpotifyTrack, AudioFeatures } from "../types";
 
-export const CLIENT_ID = "1dbe1040e81d4ca8b1f2e4646d16e9e1";
-// ✅ Your Replit URL
-const REDIRECT_URI =
-  "https://dammitspotifywrapped.netlify.app/";
+// 1. YOUR CLIENT ID
+export const CLIENT_ID = "1dbe1040e81d4ca8b1f2e4646d16e9e1"; 
+
+// 2. YOUR EXACT NETLIFY URL (Must match Spotify Dashboard exactly)
+const REDIRECT_URI = "https://dammitspotifywrapped.netlify.app/";
 
 const SCOPES = ["user-top-read", "user-read-private", "user-read-email"];
 
-// 🔒 THE REAL, OFFICIAL SPOTIFY URLS (No placeholders!)
+// 🔒 THE REAL, OFFICIAL SPOTIFY ENDPOINTS (Fixed)
 const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 const API_BASE = "https://api.spotify.com/v1";
 
 // --- Crypto Helpers (PKCE) ---
 const generateRandomString = (length: number) => {
-  const possible =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const values = crypto.getRandomValues(new Uint8Array(length));
-  return Array.from(values).reduce(
-    (acc, x) => acc + possible[x % possible.length],
-    "",
-  );
+  return Array.from(values).reduce((acc, x) => acc + possible[x % possible.length], "");
 };
 
 const sha256 = async (plain: string) => {
@@ -36,7 +33,7 @@ const base64encode = (input: ArrayBuffer) => {
     .replace(/\//g, "_");
 };
 
-// --- Auth Step 1 ---
+// --- Auth Step 1: Redirect to Spotify Login ---
 export const redirectToAuthCodeFlow = async () => {
   const verifier = generateRandomString(128);
   const challenge = base64encode(await sha256(verifier));
@@ -54,9 +51,10 @@ export const redirectToAuthCodeFlow = async () => {
   window.location.href = `${AUTH_ENDPOINT}?${params.toString()}`;
 };
 
-// --- Auth Step 2 ---
+// --- Auth Step 2: Exchange Code for Token ---
 export const getAccessToken = async (code: string): Promise<string> => {
   const verifier = localStorage.getItem("verifier");
+  
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     grant_type: "authorization_code",
@@ -71,7 +69,12 @@ export const getAccessToken = async (code: string): Promise<string> => {
     body: params,
   });
 
-  if (!result.ok) throw new Error("Login failed.");
+  if (!result.ok) {
+      const errorText = await result.text();
+      console.error("Token Exchange Failed:", errorText);
+      throw new Error("Login failed.");
+  }
+
   const { access_token } = await result.json();
   return access_token;
 };
