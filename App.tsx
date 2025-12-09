@@ -18,23 +18,16 @@ const GLOBAL_STYLES = `
   ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
 
-  /* Vintage Background (Only for Sonic Aura Single View) */
-  .vintage-bg {
-    background-image: url('https://i.ibb.co/f2FygQj/image-1.png');
-    background-size: cover;
-    background-position: center;
-  }
-
-  /* Sonic Aura Specific Glass (Morphed Box) */
+  /* Sonic Aura Specific Glass (Morphed Box) - Clean, no texture */
   .sonic-glass {
-    background: rgba(255, 255, 255, 0.05); 
+    background: rgba(255, 255, 255, 0.03); 
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
   }
 
-  /* Dashboard Cards - Clean Lift, No Scale Jitter */
+  /* Dashboard Cards - Clean Lift */
   .spotlight-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
@@ -94,7 +87,7 @@ const App = () => {
   };
 
   const startSelection = (tracks: SpotifyTrack[], title: string) => {
-    // STRICT FORCE: Only take the first 25 items passed to this function
+    // STRICT FORCE: Only take the first 25 items
     const limit = 25; 
     setCandidates(tracks.slice(0, limit));
     setSelectedIds(new Set()); 
@@ -107,16 +100,10 @@ const App = () => {
     if (!token) return;
     setLoading(true); setError(null);
     try {
-      // 1. Fetch top 50
       const tracks = await fetchTopTracks(token, 50, 'long_term');
-      
-      // 2. CRITICAL FIX: Slice to Top 25 MOST PLAYED *BEFORE* sorting by date
-      const top25 = tracks.slice(0, 25);
-
-      // 3. Sort those 25 by Release Date
+      const top25 = tracks.slice(0, 25); // Slice first
       const sorted = top25.sort((a: any, b: any) => a.album.release_date.localeCompare(b.album.release_date));
       
-      // 4. Assign Phases
       const phasedTracks = sorted.map((t: any, index: number) => ({
           ...t,
           phase: index < sorted.length / 3 ? 1 : index < (2 * sorted.length) / 3 ? 2 : 3
@@ -131,10 +118,8 @@ const App = () => {
     setLoading(true); setError(null);
     try {
       const allTracks = await fetchTopTracks(token, 50, 'long_term');
-      // Sort by popularity (Ascending)
       const sorted = allTracks.sort((a, b) => a.popularity - b.popularity);
-      // Slice the 25 most obscure
-      const candidates = sorted.slice(0, 25);
+      const candidates = sorted.slice(0, 25); // Slice first
       startSelection(candidates, 'Gatekeeper Score');
     } catch (err: any) { handleError(err); } finally { setLoading(false); }
   };
@@ -316,7 +301,6 @@ const Header = ({ logout }: any) => (
 const LoadingOverlay = () => <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 flex-col gap-4"><Loader2 className="animate-spin text-green-500 w-12 h-12"/><p className="text-green-500 animate-pulse">Analyzing Library...</p></div>;
 const ErrorBanner = ({message}: any) => <div className="bg-red-900/50 text-red-200 p-4 rounded mb-6 text-center">{message}</div>;
 
-// UPDATED DASHBOARD: Clean Lift (No Scale)
 const Dashboard = ({ onYourEras, onGatekeeper, onSonicAura }: any) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4">
     <ImageCard onClick={onYourEras} imageSrc="/spot1.jpg" title="Your Eras" description="Travel through your musical history." />
@@ -434,6 +418,14 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
     const isUnderground = title === 'Gatekeeper Score';
     const isTimeline = title === 'Your Eras';
 
+    // Helper for Uniqueness Label (Used in List + Poster)
+    const getUniquenessLabel = (popularity: number) => {
+        const score = 100 - popularity;
+        if (score >= 80) return { label: 'ROYAL', color: 'text-emerald-400' };
+        if (score >= 50) return { label: 'COMMON', color: 'text-green-400' };
+        return { label: 'LIGHT', color: 'text-lime-200' };
+    };
+
     return (
       <div className="animate-in fade-in slide-in-from-right-8 pb-20">
         <div className="sticky top-0 bg-zinc-950/95 backdrop-blur z-40 py-4 border-b border-zinc-800 mb-6 flex justify-between items-center px-2">
@@ -471,12 +463,17 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
                 const isSelected = selectedIds.has(track.id);
                 const limit = title.includes('Sonic Aura') ? 1 : 10;
                 const isDisabled = !isSelected && selectedIds.size >= limit;
+                
                 let phaseClass = "";
                 if (isTimeline) {
                      if (track.phase === 1) phaseClass = "border-l-4 border-l-blue-500";
                      if (track.phase === 2) phaseClass = "border-l-4 border-l-purple-500";
                      if (track.phase === 3) phaseClass = "border-l-4 border-l-pink-500";
                 }
+
+                // Uniqueness Score Logic (for Gatekeeper)
+                const uniqueness = 100 - track.popularity;
+                const uniqueInfo = isUnderground ? getUniquenessLabel(track.popularity) : null;
 
                 return (
                     <div key={track.id} onClick={() => !isDisabled && onToggle(track.id)} className={`song-card flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer ${phaseClass} ${isSelected ? 'bg-green-900/20 border-green-500' : isDisabled ? 'opacity-40 border-transparent' : 'bg-zinc-900/50 border-white/5 hover:bg-zinc-900'}`}>
@@ -492,7 +489,13 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
                         <div className="overflow-hidden flex-1">
                             <h4 className="font-bold truncate text-sm text-white">{track.name}</h4>
                             <div className="flex items-center gap-2 mt-1">
-                                <p className="text-xs text-zinc-400 truncate max-w-[50%]">{track.artists.map((a: any) => a.name).join(', ')}</p>
+                                <p className="text-xs text-zinc-400 truncate max-w-[60%]">{track.artists.map((a: any) => a.name).join(', ')}</p>
+                                {/* RESTORED PERCENTAGE DISPLAY */}
+                                {isUnderground && uniqueInfo && (
+                                    <span className={`text-[10px] font-bold ${uniqueInfo.color} border border-white/10 px-1.5 py-0.5 rounded`}>
+                                        {uniqueness}% {uniqueInfo.label}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -504,8 +507,6 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
 };
 
 // UPDATED RESULTS VIEW: 
-// 1. Single Track = Morphed Glass Box (with BG Image)
-// 2. Multi Track = CLEAN, FLAT, NO GLASS. 
 const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const resultsRef = useRef<HTMLDivElement>(null);
     const isSingleTrack = tracks.length === 1;
@@ -514,10 +515,7 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
     const handleDownload = async () => {
         if (!resultsRef.current) return;
         await new Promise(resolve => setTimeout(resolve, 500));
-        // For Sonic Aura (Single), we want to capture the whole vintage BG, so we use null background.
-        // For Grid (Multi), we want the clean black, so we use #09090b.
-        const exportBg = isSingleTrack ? null : '#09090b';
-        
+        const exportBg = isSingleTrack ? null : '#18181b'; // Dark Zinc for Grid Poster
         const canvas = await html2canvas(resultsRef.current, { backgroundColor: exportBg, scale: 2, useCORS: true });
         const data = canvas.toDataURL('image/png');
         const link = document.createElement('a');
@@ -526,10 +524,17 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
         link.click();
     };
 
+    const getUniquenessLabel = (popularity: number) => {
+        const score = 100 - popularity;
+        if (score >= 80) return { label: 'ROYAL', color: 'text-emerald-400' };
+        if (score >= 50) return { label: 'COMMON', color: 'text-green-400' };
+        return { label: 'LIGHT', color: 'text-lime-200' };
+    };
+
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-black flex flex-col items-center justify-center p-4">
          
-         {/* Vintage Background - ONLY VISIBLE IF SINGLE TRACK (Sonic Aura) */}
+         {/* Sonic Aura Background */}
          {isSingleTrack && <div className="fixed inset-0 vintage-bg z-[-1]"></div>}
 
          <div className="w-full max-w-4xl flex justify-between items-center mb-6 z-10">
@@ -541,7 +546,7 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
          
          {isSingleTrack ? (
              // === SINGLE TRACK (Sonic Aura) - Morphed Glass Box ===
-             <div ref={resultsRef} className="sonic-glass w-full max-w-[1000px] rounded-[30px] p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden bg-zinc-950">
+             <div ref={resultsRef} className="sonic-glass w-full max-w-[1000px] rounded-[30px] p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden bg-zinc-950/40">
                  <div className="flex-1 text-center md:text-left z-10">
                      <div className="text-2xl font-bold mb-2 flex items-center justify-center md:justify-start gap-2"><span>🎵</span> dammitspotifywrapped</div>
                      <div className="text-sm md:text-base uppercase tracking-[0.2em] opacity-80 font-semibold mb-8 text-green-300">Sonic Aura: {title}</div>
@@ -562,16 +567,15 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
              </div>
          ) : (
              // === MULTI TRACK (Eras/Gatekeeper) - REFINED CLEAN CARD LAYOUT ===
-             // No glass. Solid, clean dark background. Watermark style branding.
-             <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-8 md:p-12 relative overflow-hidden flex flex-col items-center bg-[#0d0d0d] border border-zinc-900 shadow-2xl">
+             // Background: Zinc-900 (Dark Grey/Black Card). No transparency. Rounded.
+             <div ref={resultsRef} className="w-full max-w-[1100px] rounded-[30px] p-8 md:p-12 relative overflow-hidden flex flex-col items-center bg-zinc-900 border border-zinc-800 shadow-2xl">
                  
                  {/* Top-Left Watermark Branding */}
-                 <div className="absolute top-8 left-8 flex items-center gap-2 opacity-50">
-                     <span className="text-xl">🎵</span>
-                     <span className="font-bold text-sm tracking-tighter text-white">dammitspotifywrapped</span>
+                 <div className="absolute top-8 left-8 flex items-center gap-2 opacity-80">
+                     <span className="font-black text-sm tracking-tighter text-white">dammitspotifywrapped</span>
                  </div>
 
-                 <div className="text-center z-10 mb-10 mt-6">
+                 <div className="text-center z-10 mb-10 mt-8">
                      {/* Big Green Title */}
                      <div className="text-4xl md:text-5xl font-black mb-3 text-[#1DB954] uppercase tracking-tighter drop-shadow-sm">{title}</div>
                      {/* Subtitle */}
@@ -580,20 +584,33 @@ const ResultsView = ({ title, tracks, onBack, openSpotify }: any) => {
 
                  {/* 2x5 GRID - Clean Look */}
                  <div className="grid grid-cols-2 md:grid-cols-5 gap-6 w-full z-10 px-4">
-                     {tracks.slice(0, 10).map((t: any, i: number) => (
-                         <div key={i} className="song-card bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-xl flex flex-col items-center text-center hover:bg-zinc-800 transition-colors group relative shadow-lg">
-                             <div className="relative w-full aspect-square mb-4">
-                                 <img src={t.album.images[0]?.url} className="w-full h-full rounded-lg shadow-md object-cover" alt="" crossOrigin="anonymous"/>
-                                 <div className="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg cursor-pointer transition-opacity" onClick={(e) => openSpotify(e, t.external_urls.spotify)}>
-                                    <PlayCircle className="w-12 h-12 text-white opacity-90" />
-                                 </div>
-                             </div>
-                             <div className="w-full">
-                                 <p className="font-bold text-white text-sm truncate w-full mb-1">{i+1}. {t.name}</p>
-                                 <p className="text-zinc-500 text-xs truncate w-full font-medium">{t.artists[0].name}</p>
-                             </div>
-                         </div>
-                     ))}
+                     {tracks.slice(0, 10).map((t: any, i: number) => {
+                         const uniqueness = 100 - t.popularity;
+                         const isGatekeeper = title === 'Gatekeeper Score';
+                         const uniqueInfo = getUniquenessLabel(t.popularity);
+
+                         return (
+                            <div key={i} className="song-card bg-black/30 border border-white/5 p-4 rounded-xl flex flex-col items-center text-center hover:bg-black/50 transition-colors group relative shadow-lg">
+                                <div className="relative w-full aspect-square mb-4">
+                                    <img src={t.album.images[0]?.url} className="w-full h-full rounded-lg shadow-md object-cover" alt="" crossOrigin="anonymous"/>
+                                    <div className="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg cursor-pointer transition-opacity" onClick={(e) => openSpotify(e, t.external_urls.spotify)}>
+                                        <PlayCircle className="w-12 h-12 text-white opacity-90" />
+                                    </div>
+                                </div>
+                                <div className="w-full">
+                                    <p className="font-bold text-white text-sm truncate w-full mb-1">{i+1}. {t.name}</p>
+                                    <p className="text-zinc-500 text-xs truncate w-full font-medium mb-1">{t.artists[0].name}</p>
+                                    
+                                    {/* RESTORED PERCENTAGE FOR POSTER */}
+                                    {isGatekeeper && (
+                                        <p className={`text-[10px] font-bold ${uniqueInfo.color} uppercase tracking-wider`}>
+                                            {uniqueness}% {uniqueInfo.label}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                         );
+                     })}
                  </div>
 
                  {/* Visible Footer */}
