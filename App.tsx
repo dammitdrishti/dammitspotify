@@ -400,7 +400,6 @@ const VibeMenuView = ({ buckets, onSelect, onBack, openSpotify }: any) => {
                                         <PlayCircle className="text-white w-8 h-8" />
                                     </div>
                                 </div>
-                                {/* UPDATED: Cleaner and more visible text */}
                                 <div className="overflow-hidden">
                                     <h4 className="font-black text-xl text-white mb-1">{v}</h4>
                                     <p className="text-base text-zinc-200 font-medium truncate">{track.name}</p>
@@ -438,13 +437,13 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
         </div>
       
         {isTimeline && (
-             // UPDATED: Purple Shades for Eras Timeline
+             // UPDATED: Blue Shades for Eras Timeline
              <div className="mb-8 p-6 bg-zinc-900 rounded-2xl border border-zinc-800">
                 <h3 className="text-sm font-bold text-zinc-400 mb-3 uppercase tracking-wider">Your Music Timeline</h3>
                 <div className="flex h-8 rounded-lg overflow-hidden w-full">
-                    <div className="flex-1 bg-gradient-to-r from-purple-400 to-purple-500 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">JAN - APR</div>
-                    <div className="flex-1 bg-gradient-to-r from-purple-500 to-purple-700 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">MAY - AUG</div>
-                    <div className="flex-1 bg-gradient-to-r from-purple-700 to-purple-900 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">SEP - DEC</div>
+                    <div className="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">JAN - APR</div>
+                    <div className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">MAY - AUG</div>
+                    <div className="flex-1 bg-gradient-to-r from-blue-800 to-blue-950 flex items-center justify-center text-[10px] md:text-xs font-bold text-white">SEP - DEC</div>
                 </div>
             </div>
         )}
@@ -468,10 +467,10 @@ const SelectionView = ({ title, candidates, selectedIds, onToggle, onConfirm, on
                 
                 let phaseClass = "";
                 if (isTimeline) {
-                     // UPDATED: Purple Shades for Eras Borders
-                     if (track.phase === 1) phaseClass = "border-l-4 border-l-purple-400";
-                     if (track.phase === 2) phaseClass = "border-l-4 border-l-purple-600";
-                     if (track.phase === 3) phaseClass = "border-l-4 border-l-purple-900";
+                     // UPDATED: Blue Shades for Eras Borders
+                     if (track.phase === 1) phaseClass = "border-l-4 border-l-blue-400";
+                     if (track.phase === 2) phaseClass = "border-l-4 border-l-blue-600";
+                     if (track.phase === 3) phaseClass = "border-l-4 border-l-blue-900";
                 }
 
                 // Uniqueness Score Logic (for Gatekeeper)
