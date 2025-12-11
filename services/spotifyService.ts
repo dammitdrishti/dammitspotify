@@ -2,7 +2,7 @@ import { SpotifyTrack, AudioFeatures } from "../types";
 
 export const CLIENT_ID = "1dbe1040e81d4ca8b1f2e4646d16e9e1"; 
 // ✅ Your Netlify URL (Must match Spotify Dashboard exactly)
-const REDIRECT_URI = "https://dammitspotifywrapped.netlify.app/";
+const REDIRECT_URI = "https://dammitspotify.vercel.app/";
 
 const SCOPES = ["user-top-read", "user-read-private", "user-read-email"];
 
